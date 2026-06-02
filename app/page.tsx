@@ -9,16 +9,43 @@ const role = "Cybersecurity Enthusiast · Web & App Developer";
 const website = "https://www.boudjemlineabdelhadi.com";
 const email = "boudjemline.mohamed.abdelhadi@gmail.com";
 const phone = "0562232628";
-const cvPath = "/cv.pdf";
+const cvPath = "/cv_boudjemline";
+const cvDownloadPath = "/api/download-cv";
+const cvDownloadFilename = "Mohamed_Boudjemline_CV.pdf";
 const profileImg = "/image.jpg";
 const qrImg = "/qr-code.png";
 
 export default function Home() {
   const [shareOpen, setShareOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleDownloadCv = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const res = await fetch(cvDownloadPath);
+      if (!res.ok) throw new Error("CV not found");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = cvDownloadFilename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.location.href = cvDownloadPath;
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const encodedShare = useMemo(() => {
     if (!mounted) {
@@ -91,12 +118,16 @@ export default function Home() {
           >
             <motion.a
               variants={{ hidden: { y: 10, opacity: 0 }, show: { y: 0, opacity: 1 } }}
-              href={cvPath}
-              download
-              className="group inline-flex w-full items-center justify-center gap-2.5 sm:gap-3 rounded-xl bg-blue-600 px-3.5 sm:px-4 md:px-5 py-2.5 sm:py-3 text-[0.85rem] sm:text-sm text-white shadow hover:bg-blue-700 active:bg-blue-800"
+              href={cvDownloadPath}
+              download={cvDownloadFilename}
+              onClick={handleDownloadCv}
+              aria-busy={downloading}
+              className="group inline-flex w-full items-center justify-center gap-2.5 sm:gap-3 rounded-xl bg-blue-600 px-3.5 sm:px-4 md:px-5 py-2.5 sm:py-3 text-[0.85rem] sm:text-sm text-white shadow hover:bg-blue-700 active:bg-blue-800 disabled:opacity-70"
             >
               <Image src="/file.svg" alt="file" width={18} height={18} className="opacity-90" />
-              <span className="font-medium">Download My CV (PDF)</span>
+              <span className="font-medium">
+                {downloading ? "Downloading…" : "Download My CV (PDF)"}
+              </span>
             </motion.a>
 
             {/* Send (share options) */}
